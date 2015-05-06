@@ -7,10 +7,11 @@
                 android:paddingTop="@dimen/activity_vertical_margin"
                 android:paddingBottom="@dimen/activity_vertical_margin"
                 tools:context=".MainActivity">
-
-    <TextView
-        android:text="@string/hello_world"
+    <ImageView
+        android:id="@+id/image"
+        android:src="@drawable/hello"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"/>
+
 
 </RelativeLayout>
