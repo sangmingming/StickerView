@@ -128,6 +128,9 @@ public class StickerView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (mBitmap == null || mMatrix == null) {
+            return;
+        }
 
         mMatrix.mapPoints(mPoints, mOriginPoints);
 
