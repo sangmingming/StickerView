@@ -1,5 +1,7 @@
 # StickerView For Android
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-StickerView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1817)
+
 sticker view for android, can translate, scale, rotate.
 
 how it work: [http://blog.isming.me/2015/05/10/sticker-view/](http://blog.isming.me/2015/05/10/sticker-view/)
