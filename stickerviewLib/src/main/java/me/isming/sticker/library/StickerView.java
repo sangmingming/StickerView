@@ -11,6 +11,7 @@ import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.FloatMath;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -36,10 +37,13 @@ public class StickerView extends View {
 
     private Bitmap mBitmap;
     private Bitmap mControllerBitmap, mDeleteBitmap;
+    private Bitmap mReversalHorBitmap,mReversalVerBitmap;//水平反转和垂直反转bitmap
     private Matrix mMatrix;
     private Paint mPaint, mBorderPaint;
     private float mControllerWidth, mControllerHeight, mDeleteWidth, mDeleteHeight;
+    private float mReversalHorWidth,mReversalHorHeight,mReversalVerWidth,mReversalVerHeight;
     private boolean mInController, mInMove;
+    private boolean mInReversalHorizontal,mInReversalVertical;
 
     private boolean mDrawController = true;
     //private boolean mCanTouch;
@@ -80,6 +84,14 @@ public class StickerView extends View {
         mDeleteBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_sticker_delete);
         mDeleteWidth = mDeleteBitmap.getWidth();
         mDeleteHeight = mDeleteBitmap.getHeight();
+
+        mReversalHorBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.ic_sticker_reversal_horizontal);
+        mReversalHorWidth = mReversalHorBitmap.getWidth();
+        mReversalHorHeight = mReversalHorBitmap.getHeight();
+
+        mReversalVerBitmap = BitmapFactory.decodeResource(getResources(),R.drawable.ic_sticker_reversal_vertical);
+        mReversalVerWidth = mReversalVerBitmap.getWidth();
+        mReversalVerHeight = mReversalVerBitmap.getHeight();
 
     }
 
@@ -143,6 +155,8 @@ public class StickerView extends View {
             canvas.drawLine(mPoints[6], mPoints[7], mPoints[0], mPoints[1], mBorderPaint);
             canvas.drawBitmap(mControllerBitmap, mPoints[4] - mControllerWidth / 2, mPoints[5] - mControllerHeight / 2, mBorderPaint);
             canvas.drawBitmap(mDeleteBitmap, mPoints[0] - mDeleteWidth / 2, mPoints[1] - mDeleteHeight / 2, mBorderPaint);
+            canvas.drawBitmap(mReversalHorBitmap,mPoints[2]-mReversalHorWidth/2,mPoints[3]-mReversalVerHeight/2,mBorderPaint);
+            canvas.drawBitmap(mReversalVerBitmap,mPoints[6]-mReversalVerWidth/2,mPoints[7]-mReversalVerHeight/2,mBorderPaint);
         }
     }
 
@@ -196,7 +210,30 @@ public class StickerView extends View {
         return false;
 
     }
+    //判断点击区域是否在水平反转按钮区域内
+    private boolean isInReversalHorizontal(float x,float y){
+        int position = 2;
+        float rx = mPoints[position];
+        float ry = mPoints[position+1];
 
+        RectF rectF = new RectF(rx - mReversalHorWidth/2,ry-mReversalHorHeight/2,rx+mReversalHorWidth/2,ry+mReversalHorHeight/2);
+        if (rectF.contains(x,y))
+            return true;
+
+        return false;
+
+    }
+    //判断点击区域是否在垂直反转按钮区域内
+    private boolean isInReversalVertical(float x,float y){
+        int position = 6;
+        float rx = mPoints[position];
+        float ry = mPoints[position+1];
+
+        RectF rectF = new RectF(rx - mReversalVerWidth/2,ry - mReversalVerHeight/2,rx + mReversalVerWidth/2,ry+mReversalVerHeight/2);
+        if (rectF.contains(x,y))
+            return true;
+        return false;
+    }
 
     private boolean mInDelete = false;
     @Override
@@ -223,6 +260,16 @@ public class StickerView extends View {
                     break;
                 }
 
+                if(isInReversalHorizontal(x,y)){
+                    mInReversalHorizontal = true;
+                    break;
+                }
+
+                if(isInReversalVertical(x,y)){
+                    mInReversalVertical = true;
+                    break;
+                }
+
                 if (mContentRect.contains(x, y)) {
                     mLastPointY = y;
                     mLastPointX = x;
@@ -232,6 +279,15 @@ public class StickerView extends View {
             case MotionEvent.ACTION_UP:
                 if (isInDelete(x, y) && mInDelete) {
                     doDeleteSticker();
+                    break;
+                }
+                if(isInReversalHorizontal(x,y) && mInReversalHorizontal){
+                    doReversalHorizontal();
+                    break;
+                }
+                if (isInReversalVertical(x,y) && mInReversalVertical){
+                    doReversalVertical();
+                    break;
                 }
             case MotionEvent.ACTION_CANCEL:
                 mLastPointX = 0;
@@ -239,6 +295,8 @@ public class StickerView extends View {
                 mInController = false;
                 mInMove = false;
                 mInDelete = false;
+                mInReversalHorizontal = false;
+                mInReversalVertical = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mInController) {
@@ -291,6 +349,28 @@ public class StickerView extends View {
             mOnStickerDeleteListener.onDelete();
         }
     }
+
+    //图片水平反转
+    private void doReversalHorizontal(){
+        float[] floats = new float[] { -1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f };
+        Matrix tmpMatrix = new Matrix();
+        tmpMatrix.setValues(floats);
+        mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(),
+                mBitmap.getHeight(), tmpMatrix, true);
+        invalidate();
+        mInReversalHorizontal = false;
+    }
+    //图片垂直反转
+    private void doReversalVertical(){
+        float[] floats = new float[] { 1f, 0f, 0f, 0f, -1f, 0f, 0f, 0f, 1f };
+        Matrix tmpMatrix = new Matrix();
+        tmpMatrix.setValues(floats);
+        mBitmap = Bitmap.createBitmap(mBitmap, 0, 0, mBitmap.getWidth(),
+                mBitmap.getHeight(), tmpMatrix, true);
+        invalidate();
+        mInReversalVertical = false;
+    }
+
 
     private boolean canStickerMove(float cx, float cy) {
         float px = cx + mPoints[8];
